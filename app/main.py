@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from routers import request, master
-from db.controller import create_table
+from db.database import create_table
 from contextlib import asynccontextmanager
 
 @asynccontextmanager

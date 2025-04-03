@@ -1,23 +1,21 @@
 from .base_model import Base
 from .request_model import RequestModel
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String
+from sqlalchemy import String, Integer
 from passlib.context import CryptContext
+from typing import List
 
 PASSLIB_CONTEXT = CryptContext(
     schemes=["pbkdf2_sha512"],
     deprecated="auto"
 )
 
-from typing import List
-
-class MasterModel(Base):
-    __tablename__ = "masters"
+class UserModel(Base):
+    __tablename__ = "users"
     
-    requests: Mapped[List['RequestModel']] = relationship("RequestModel", backref="requests")
+    requests: Mapped[List['RequestModel']] = relationship("RequestModel")
     name: Mapped[str] = mapped_column(String(30), nullable=False)
-    surname: Mapped[str] = mapped_column(String(30), nullable=False)
-    patronymic: Mapped[str] = mapped_column(String(30), nullable=True)
+    tg_id: Mapped[int] = mapped_column(Integer(), nullable=True)
     phone: Mapped[str] = mapped_column(String(11), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
     
