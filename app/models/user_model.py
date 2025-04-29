@@ -15,8 +15,8 @@ class UserModel(Base):
     
     requests: Mapped[List['RequestModel']] = relationship("RequestModel")
     name: Mapped[str] = mapped_column(String(30), nullable=False)
-    tg_id: Mapped[int] = mapped_column(Integer(), nullable=True)
-    phone: Mapped[str] = mapped_column(String(11), nullable=False)
+    tg_id: Mapped[int] = mapped_column(Integer(), nullable=True, unique=True)
+    phone: Mapped[str] = mapped_column(String(11), nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
     
     def __init__(self, password=None, password_hash=None, **kwargs):

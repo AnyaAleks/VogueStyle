@@ -4,7 +4,7 @@ from dateutil import parser
 from .base_schema import Base
 
 class RequestSchemaCreate(Base):
-    master: int = Field()
+    master: int
     datetime: dt
     name: str = Field(max_length=15)
     phone: str = Field(max_length=11)
