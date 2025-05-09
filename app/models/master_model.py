@@ -1,15 +1,14 @@
-from .base_model import Base
-from .request_model import RequestModel
+from typing import List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String
 from passlib.context import CryptContext
+from .base_model import Base
+from .request_model import RequestModel
 
 PASSLIB_CONTEXT = CryptContext(
     schemes=["pbkdf2_sha512"],
     deprecated="auto"
 )
-
-from typing import List
 
 class MasterModel(Base):
     __tablename__ = "masters"

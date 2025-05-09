@@ -1,7 +1,8 @@
+from typing import Annotated
 from .depends import AsyncSessionDep
-from fastapi import APIRouter
+from fastapi import APIRouter, Path
 from dto.user_schema import UserSchemaCreate, UserSchemaCheck
-from services.user_services import _create_user, _get_user_by_tg_id, _check_user
+from dao.user import _get_user_by_id, _create_user, _get_user_by_tg_id, _check_user
 
 router = APIRouter(
     prefix="/user",
@@ -12,9 +13,13 @@ router = APIRouter(
 async def create_user(UserInfo: UserSchemaCreate, session: AsyncSessionDep):
     return await _create_user(UserInfo, session)
 
-@router.get("/{user_tg_id}", name="Получение пользователя по tg_id")
+@router.get("/tg_id/{user_tg_id}", name="Получение пользователя по tg_id")
 async def get_user_by_tg(user_tg_id: int, session: AsyncSessionDep):
     return await _get_user_by_tg_id(user_tg_id, session)
+
+@router.get("/id/{user_id}", name="Получение пользователя по id")
+async def get_user_by_id(user_id: Annotated[int, Path(ge=1, lt=1_000_000)], session: AsyncSessionDep):
+    return await _get_user_by_id(user_id, session)
 
 @router.post("/check", name="Проверка пользователя")
 async def check_user(UserInfo: UserSchemaCheck, session: AsyncSessionDep):

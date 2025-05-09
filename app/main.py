@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers import request, master, user
+from routers import request, master, user, service
 from db.database import create_table
 from contextlib import asynccontextmanager
 
@@ -15,6 +15,7 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(request.router)
 app.include_router(master.router)
 app.include_router(user.router)
+app.include_router(service.router)
 
 @app.get("/healthcheck")
 async def root():
