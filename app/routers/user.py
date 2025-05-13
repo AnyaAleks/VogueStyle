@@ -1,8 +1,8 @@
 from typing import Annotated
 from .depends import AsyncSessionDep
 from fastapi import APIRouter, Path
-from dto.user_schema import UserSchemaCreate, UserSchemaCheck
-from dao.user import _get_user_by_id, _create_user, _get_user_by_tg_id, _check_user
+from dto.user_schema import UserSchemaCreate, UserSchemaCheck, UserSchemaLink
+from dao.user import _get_user_by_id, _create_user, _get_user_by_tg_id, _check_user, _link_user
 
 router = APIRouter(
     prefix="/user",
@@ -24,3 +24,7 @@ async def get_user_by_id(user_id: Annotated[int, Path(ge=1, lt=1_000_000)], sess
 @router.post("/check", name="Проверка пользователя")
 async def check_user(UserInfo: UserSchemaCheck, session: AsyncSessionDep):
     return await _check_user(UserInfo.phone, UserInfo.password, session)
+
+@router.put("/link", name="Привязка тг по id")
+async def link_user(UserInfo: UserSchemaLink, session: AsyncSessionDep):
+    return await _link_user(UserInfo, session)

@@ -17,3 +17,7 @@ class UserSchemaCreate(Base):
 class UserSchemaCheck(Base):
     phone: str = Field(max_length=11)
     password: str
+    
+class UserSchemaLink(Base):
+    id: PositiveInt
+    tg_id: PositiveInt

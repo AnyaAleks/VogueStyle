@@ -1,4 +1,4 @@
-from dto.user_schema import UserSchemaCreate, UserSchemaGet
+from dto.user_schema import UserSchemaCreate, UserSchemaGet, UserSchemaLink
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy import select
@@ -45,7 +45,7 @@ async def _check_user(phone: str, password: str, session: AsyncSession):
         result = await session.execute(stmt)
         user: UserModel = result.scalar_one()
         if user.verify_password(password):
-            return {"ok": True, "verified": True, "message":"Данные подтверждены"}
+            return {"ok": True, "verified": True, "user": UserSchemaGet(id=user.id, name=user.name, tg_id=user.tg_id, phone=user.phone)}
         else:
             return {"ok": True, "verified": False, "message":"Данные не подтверждены"}
     except NoResultFound:
@@ -53,3 +53,11 @@ async def _check_user(phone: str, password: str, session: AsyncSession):
     except Exception as e:
         return {"ok": False, "verified": False, "message":f"Непредвиденая ошибка при проверке пользователя: {e}"}
     
+async def _link_user(UserInfo: UserSchemaLink, session: AsyncSession):
+    try:
+        user: UserModel = await session.get(UserModel, UserInfo.id)
+        user.tg_id = UserInfo.tg_id
+        await session.commit()
+        return {"ok": True, "message": "Свзка аккаунтов произошла успешно"}
+    except Exception as e:
+        return {"ok": False, "message": f"При попытке свзяать аккаунты произошла ошибка: {e}"}
