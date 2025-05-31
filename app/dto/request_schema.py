@@ -1,38 +1,26 @@
-from datetime import datetime as dt
-from pydantic import PositiveInt, field_validator
-from dateutil import parser
-from .base_schema import Base
-from .master_schema import MasterSchemaGet
-from .user_schema import UserSchemaGet
-from .service_schema import ServiceSchemaGet
+from typing import Optional
+from datetime import datetime
+from pydantic import BaseModel
 
-class RequestSchemaCreate(Base):
-    master_id: PositiveInt
-    service_id: PositiveInt
-    user_id: PositiveInt
-    datetime: dt
-    
-    @field_validator("datetime", mode="before")
-    def ensure_datatime(cls, value):
-        try:
-            value = parser.parse(value)
-            if isinstance(value, dt):
-                return f"{value.date()} {value.time()}"
-        except Exception:
-            return value
-        
-class RequestSchemaGet(Base):
-    id: PositiveInt
-    master: MasterSchemaGet
-    user: UserSchemaGet
-    service: ServiceSchemaGet
-    datetime: dt
-    
-    @field_validator("datetime", mode="before")
-    def ensure_datatime(cls, value):
-        try:
-            value = parser.parse(value)
-            if isinstance(value, dt):
-                return f"{value.date()} {value.time()}"
-        except Exception:
-            return value
+class RequestCreate(BaseModel):
+    master_id: int
+    service_id: int
+    user_id: int
+    schedule_at: datetime
+
+class RequestUpdate(BaseModel):
+    master_id: Optional[int] = None
+    service_id: Optional[int] = None
+    user_id: Optional[int] = None
+    schedule_at: Optional[datetime] = None
+
+class RequestGet(BaseModel):
+    id: int
+    master_id: int
+    service_id: int
+    user_id: int
+    schedule_at: datetime
+
+    model_config = {
+        "from_attributes": True
+    }

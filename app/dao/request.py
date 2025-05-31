@@ -1,80 +1,60 @@
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
-from dto.request_schema import RequestSchemaCreate, RequestSchemaGet
-from dto.master_schema import MasterSchemaGet
-from dto.service_schema import ServiceSchemaGet
-from dto.user_schema import UserSchemaGet
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import select
+from dto.request_schema import RequestCreate, RequestGet, RequestUpdate
 from models.request_model import RequestModel
-from dao.user import _get_user_by_id
-from dao.master import _get_master_by_id
-from dao.service import _get_service_by_id
+from .utility import get_object_by_id
 
-async def _create_request(RequestInfo: RequestSchemaCreate,session: AsyncSession):
-    req = RequestModel(**RequestInfo.__dict__)
+async def create_request(request_data: RequestCreate, session: AsyncSession) -> dict:
+    req = RequestModel(**request_data.model_dump())
     try:
         session.add(req)
         await session.commit()
-    except Exception as e:
-        return {"ok": False, "message": f"Ошибка при добавлении записи: {e}"}
-    return {"ok":True, "message": "Заявка успешно добавлена" }
+        await session.refresh(req)
+    except SQLAlchemyError as e:
+        await session.rollback()
+        return {"ok": False, "message": "Ошибка при создании запроса", "details": str(e)}
+    return {"ok": True, "request_id": req.id}
 
-async def _get_request_by_id(request_id: int, session: AsyncSession):
-    request = None
-    master = None
-    user = None
-    service = None
+async def update_request(request_id: int, data: RequestUpdate, session: AsyncSession) -> dict:
+    req = await get_object_by_id(RequestModel, request_id, session)
+    if not req:
+        return {"ok": False, "message": "Запрос не найден"}
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(req, field, value)
     try:
-        stmt = select(RequestModel).where(RequestModel.id == request_id)
-        result = await session.execute(stmt)
-        request: RequestModel = result.scalar_one()
-    except Exception as e: 
-        return {"ok": False, "message": f"Ошибка при попытке получения записи - {e}"}
-    try:
-        pre_master_data = await _get_master_by_id(request.master_id, session)
-        master: MasterSchemaGet = pre_master_data["master"]
-        pre_user_data = await _get_user_by_id(request.user_id, session)
-        user: UserSchemaGet = pre_user_data["user"]
-        pre_service_data = await _get_service_by_id(request.service_id, session)
-        service: ServiceSchemaGet = pre_service_data["service"]
-    except Exception as e:
-        return {"ok": False, "message":f"При попытке получения данных для записи - {e}"}
-    return {"ok": True, "request": RequestSchemaGet(id=request.id, user=user, master=master, service=service, datetime=request.datetime)}
+        await session.commit()
+        await session.refresh(req)
+    except SQLAlchemyError as e:
+        await session.rollback()
+        return {"ok": False, "message": "Ошибка при обновлении запроса", "details": str(e)}
+    return {"ok": True, "request_id": req.id}
 
-async def _get_all_actual_requests(session: AsyncSession):
-    requests = []
-    
-    try:
-        stmt = select(RequestModel.id, RequestModel.master_id, RequestModel.user_id, RequestModel.service_id, RequestModel.datetime).where(RequestModel.datetime > datetime.now())
-        result = await session.execute(stmt)
-        data: list[RequestModel] = result.all()
-        
-        for row in data:
-            pre_master_data = await _get_master_by_id(row.master_id, session)
-            master: MasterSchemaGet = pre_master_data["master"]
-            pre_user_data = await _get_user_by_id(row.user_id, session)
-            user: UserSchemaGet = pre_user_data["user"]
-            pre_service_data = await _get_service_by_id(row.service_id, session)
-            service: ServiceSchemaGet = pre_service_data["service"]
-            requests.append(RequestSchemaGet(id=row.id, user=user, service=service, master=master, datetime=row.datetime))
-    except Exception as e:
-        return {"ok": False, "message": f"Ошибка при попытке получения всех услуг - {e}"}
-    return {"ok": True, "requests": requests}
+async def get_request_by_id(request_id: int, session: AsyncSession) -> dict:
+    req = await get_object_by_id(RequestModel, request_id, session)
+    if not req:
+        return {"ok": False, "message": "Запрос не найден"}
+    return {"ok": True, "request": RequestGet.model_validate(req)}
 
-async def _get_all_requests(session: AsyncSession):
-    requests = []
+async def get_all_requests(session: AsyncSession) -> list[RequestGet]:
+    result = await session.execute(select(RequestModel))
+    reqs = result.scalars().all()
+    return [RequestGet.model_validate(r) for r in reqs]
+
+async def get_all_actual_requests(session: AsyncSession) -> list[RequestGet]:
+    result = await session.execute(select(RequestModel).where(RequestModel.schedule_at >= datetime.today()))
+    reqs = result.scalars().all()
+    return [RequestGet.model_validate(r) for r in reqs]
+
+async def delete_request(request_id: int, session: AsyncSession) -> dict:
+    req = await get_object_by_id(RequestModel, request_id, session)
+    if not req:
+        return {"ok": False, "message": "Запрос не найден"}
     try:
-        stmt = select(RequestModel.id, RequestModel.master_id, RequestModel.user_id, RequestModel.service_id, RequestModel.datetime)
-        result = await session.execute(stmt)
-        data: list[RequestModel] = result.all()
-        for row in data:
-            pre_master_data = await _get_master_by_id(row.master_id, session)
-            master: MasterSchemaGet = pre_master_data["master"]
-            pre_user_data = await _get_user_by_id(row.user_id, session)
-            user: UserSchemaGet = pre_user_data["user"]
-            pre_service_data = await _get_service_by_id(row.service_id, session)
-            service: ServiceSchemaGet = pre_service_data["service"]
-            requests.append(RequestSchemaGet(id=row.id, user=user, service=service, master=master, datetime=row.datetime))
-    except Exception as e:
-        return {"ok": False, "message": f"Ошибка при попытке получения всех услуг - {e}"}
-    return {"ok": True, "requests": requests}
+        await session.delete(req)
+        await session.commit()
+    except SQLAlchemyError as e:
+        await session.rollback()
+        return {"ok": False, "message": "Ошибка при удалении запроса", "details": str(e)}
+    return {"ok": True, "message": "Запрос удалён"}

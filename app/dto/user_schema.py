@@ -1,23 +1,37 @@
-from typing import Union
-from .base_schema import Base
-from pydantic import Field, PositiveInt
+from typing import Optional, List
+from datetime import date
+from pydantic import constr, BaseModel
 
-class UserSchemaGet(Base):
-    id: PositiveInt
+class UserCreate(BaseModel):
+    name: constr(max_length=30)
+    surname: Optional[constr(max_length=30)] = None
+    patronymic: Optional[constr(max_length=30)] = None
+    birthday: Optional[date] = None
+    tg_id: Optional[int] = None
+    phone: constr(min_length=11, max_length=12)
+
+class UserUpdate(BaseModel):
+    name: Optional[constr(max_length=30)] = None
+    surname: Optional[constr(max_length=30)] = None
+    patronymic: Optional[constr(max_length=30)] = None
+    birthday: Optional[date] = None
+    tg_id: Optional[int] = None
+    phone: Optional[constr(min_length=11, max_length=12)] = None
+
+class UserGet(BaseModel):
+    id: int
     name: str
-    tg_id: Union[PositiveInt, None]
-    phone: str = Field(max_length=11)
-    
-class UserSchemaCreate(Base):
-    name: str
-    tg_id: PositiveInt = Field(default=None)
+    surname: Optional[str]
+    patronymic: Optional[str]
+    birthday: Optional[date]
+    tg_id: Optional[int]
     phone: str
-    password: str
-    
-class UserSchemaCheck(Base):
-    phone: str = Field(max_length=11)
-    password: str
-    
-class UserSchemaLink(Base):
-    id: PositiveInt
-    tg_id: PositiveInt
+    requests: List[int] = []
+
+    model_config = {
+        "from_attributes": True
+    }
+        
+class UserLink(BaseModel):
+    phone: str
+    tg_id: int

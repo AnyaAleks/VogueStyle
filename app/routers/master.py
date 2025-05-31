@@ -1,34 +1,54 @@
-from .depends import AsyncSessionDep
-from fastapi import APIRouter, Path
-from dao.master import _update_master, _create_master, _get_all_masters, _get_master_by_id, _check_master, _update_master_password
-from dto.master_schema import MasterSchemaCreate, MasterSchemaCheck, MasterSchemaUpdate, MasterSchemaUpdatePassword
 from typing import Annotated
+from fastapi import APIRouter, Path
+from dao.master import \
+    create_master, get_all_masters, get_master_by_id, update_master, update_master_password, check_master
+from dto.master_schema import MasterCheck, MasterCreate, MasterGet, MasterPasswordUpdate, MasterUpdate
+from .depends import AsyncSessionDep
 
 router = APIRouter(
     prefix="/master",
     tags=["Все, что свзяано с мастером"]
     )
 
-@router.post("", name="Добавление мастера")
-async def create_master(MasterInfo: MasterSchemaCreate, session: AsyncSessionDep):
-    return await _create_master(MasterInfo, session)
+@router.post("", response_model=dict, name="Добавление мастера")
+async def post_create_master(
+    master_data: MasterCreate,
+    session: AsyncSessionDep
+):
+    return await create_master(master_data, session)
 
-@router.get("/id/{master_id}", name="Получение мастера по id")
-async def get_master_by_id(master_id: Annotated[int, Path(ge=1, lt=1_000_000)], session: AsyncSessionDep):
-    return await _get_master_by_id(master_id, session)
+@router.get("/id/{master_id}", response_model=dict, name="Получение мастера по id")
+async def get_master(
+    master_id: Annotated[int, Path(ge=1, lt=1_000_000)],
+    session: AsyncSessionDep
+):
+    result = await get_master_by_id(master_id, session)
+    return result
 
-@router.get("", name="Получение всех мастеров")
-async def get_all_masters(session: AsyncSessionDep):
-    return await _get_all_masters(session)
+@router.get("", response_model=list[MasterGet], name="Получение всех мастеров")
+async def list_masters(
+    session: AsyncSessionDep
+):
+    return await get_all_masters(session)
 
-@router.put("", name="Обновление данных мастера")
-async def update_master(MasterInfo: MasterSchemaUpdate, session: AsyncSessionDep):
-    return await _update_master(MasterInfo, session)
+@router.put("/id/{master_id}", response_model=dict, name="Обновление данных мастера")
+async def put_update_master(
+    master_id: Annotated[int, Path(ge=1, lt=1_000_000)],
+    master_data: MasterUpdate,
+    session: AsyncSessionDep
+):
+    return await update_master(master_id, master_data, session)
 
-@router.put("/pass", name="Обновление пароля мастера")
-async def update_master_password(MasterInfo: MasterSchemaUpdatePassword, session: AsyncSessionDep):
-    return await _update_master_password(MasterInfo, session)
+@router.put("/password", response_model=dict, name="Обновление пароля мастера")
+async def put_update_master_password(
+    password_data: MasterPasswordUpdate,
+    session: AsyncSessionDep
+):
+    return await update_master_password(password_data, session)
 
-@router.post("/check", name="Проверка мастера")
-async def check_master(MasterInfo: MasterSchemaCheck, session: AsyncSessionDep):
-    return await _check_master(MasterInfo, session)
+@router.post("/check", response_model=dict, name="Проверка мастера")
+async def post_check_master(
+    credentials: MasterCheck,
+    session: AsyncSessionDep
+):
+    return await check_master(credentials, session)

@@ -1,43 +1,54 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from dto.service_schema import ServiceSchemaGet, ServiceSchemaCreate, ServiceSchemaUpdate
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import select
+from dto.service_schema import ServiceCreate, ServiceGet, ServiceUpdate
 from models.service_model import ServiceModel
-from sqlalchemy import select, update
+from .utility import get_object_by_id
 
-async def _create_service(ServiceInfo: ServiceSchemaCreate,session: AsyncSession):
-    req = ServiceModel(**ServiceInfo.__dict__)
+async def create_service(service_data: ServiceCreate, session: AsyncSession) -> dict:
+    svc = ServiceModel(**service_data.model_dump())
     try:
-        session.add(req)
+        session.add(svc)
         await session.commit()
-    except Exception as e:
-        return {"ok": False, "message": f"Ошибка при добавлении услуги: {e}"}
-    return {"ok":True, "message": "Услуга успешно добавлена"}
+        await session.refresh(svc)
+    except SQLAlchemyError as e:
+        await session.rollback()
+        return {"ok": False, "message": "Ошибка при добавлении услуги", "details": str(e)}
+    return {"ok": True, "service_id": svc.id}
 
-async def _get_service_by_id(service_id: int, session: AsyncSession):
-    service = None
+async def update_service(service_id: int, data: ServiceUpdate, session: AsyncSession) -> dict:
+    svc = await get_object_by_id(ServiceModel, service_id, session)
+    if not svc:
+        return {"ok": False, "message": "Услуга не найдена"}
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(svc, field, value)
     try:
-        stmt = select(ServiceModel).where(ServiceModel.id == service_id)
-        result = await session.execute(stmt)
-        service: ServiceModel = result.scalar_one()
-    except Exception as e:
-        return {"ok": False, "message": f"Ошибка при попытке получения услуги - {e}"}
-    return {"ok": True, "service": ServiceSchemaGet(id=service.id, name=service.name, description=service.description, price=service.price, time_minutes=service.time_minutes)}
-
-async def _get_all_services(session: AsyncSession):
-    services = []
-    try:
-        stmt = select(ServiceModel.id, ServiceModel.name, ServiceModel.description, ServiceModel.price, ServiceModel.time_minutes)
-        result = await session.execute(stmt)
-        data: list[ServiceModel] = result.all()
-        for row in data:
-            services.append(ServiceSchemaGet(id=row.id, name=row.name, description=row.description, price=row.price, time_minutes=row.time_minutes))
-    except Exception as e:
-        return {"ok": False, "message": f"Ошибка при попытке получения всех услуг - {e}"}
-    return {"ok": True, "services": services}
-
-async def _update_service(ServiceInfo: ServiceSchemaUpdate, session: AsyncSession):
-    try:
-        await session.execute(update(ServiceModel), [{"id": ServiceInfo.id, "name": ServiceInfo.name, "description": ServiceInfo.description, "price": ServiceInfo.price, "time_minutes": ServiceInfo.time_minutes}])
         await session.commit()
-    except Exception as e:
-        return {"ok": False, "message": f"При попытке обновления данных услуги была произведена ошибка - {e}"}
-    return {"ok": True, "message": "Услуга была успешно обновлена"}
+        await session.refresh(svc)
+    except SQLAlchemyError as e:
+        await session.rollback()
+        return {"ok": False, "message": "Ошибка при обновлении услуги", "details": str(e)}
+    return {"ok": True, "service_id": svc.id}
+
+async def get_service_by_id(service_id: int, session: AsyncSession) -> dict:
+    svc = await get_object_by_id(ServiceModel, service_id, session)
+    if not svc:
+        return {"ok": False, "message": "Услуга не найдена"}
+    return {"ok": True, "service": ServiceGet.model_validate(svc)}
+
+async def get_all_services(session: AsyncSession) -> list[ServiceGet]:
+    result = await session.execute(select(ServiceModel))
+    svcs = result.scalars().all()
+    return [ServiceGet.model_validate(s) for s in svcs]
+
+async def delete_service(service_id: int, session: AsyncSession) -> dict:
+    svc = await get_object_by_id(ServiceModel, service_id, session)
+    if not svc:
+        return {"ok": False, "message": "Услуга не найдена"}
+    try:
+        await session.delete(svc)
+        await session.commit()
+    except SQLAlchemyError as e:
+        await session.rollback()
+        return {"ok": False, "message": "Ошибка при удалении услуги", "details": str(e)}
+    return {"ok": True, "message": "Услуга удалена"}

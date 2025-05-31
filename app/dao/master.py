@@ -1,74 +1,127 @@
+from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import NoResultFound
-from dto.master_schema import MasterSchemaCheck, MasterSchemaUpdate, MasterSchemaCreate, MasterSchemaGet, MasterSchemaUpdatePassword
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
+from dto.master_schema import \
+    MasterCheck, MasterUpdate, MasterCreate, MasterGet, MasterPasswordUpdate
+from dto.certificate_schema import CertificateGet
 from models.master_model import MasterModel
-from sqlalchemy import select, update
+from models.certificate_model import CertificateModel
+from .utility import get_object_by_id
 # from sqlalchemy.orm import selectinload
 
-async def _create_master(MasterInfo: MasterSchemaCreate, session: AsyncSession):
-    master = MasterModel(
-        name = MasterInfo.name,
-        surname = MasterInfo.surname,
-        patronymic = MasterInfo.patronymic,
-        password = MasterInfo.password,
-        phone = MasterInfo.phone
-    )
-    
+async def create_master(master_data: MasterCreate, session: AsyncSession) -> dict:
+    master = MasterModel(**master_data.model_dump())
     try:
         session.add(master)
         await session.commit()
-    except Exception as e:
-        return {"ok": False, "message":f"Ошибка при добавлении нового мастера: {e}"}
-    return {"ok": True, "message":"Мастер успешно добавлен"}
+        await session.refresh(master)
+    except SQLAlchemyError as e:
+        await session.rollback()
+        return {"ok": False, "message": "Ошибка при добавлении мастера", "details": str(e)}
+    return {"ok": True, "master_id": master.id}
 
-async def _get_master_by_id(master_id: int, session: AsyncSession):
-    master = None
-    
+async def update_master(master_id: int, data: MasterUpdate, session: AsyncSession) -> dict:
+    master = await get_object_by_id(MasterModel, master_id, session)
+    if not master:
+        return {"ok": False, "message": "Мастер не найден"}
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(master, field, value)
     try:
-        # stmt = select(MasterModel).options(selectinload(MasterModel.requests)).where(MasterModel.id == master_id) <- это позволяет получить еще все записи связанные с нужным мастром
-        stmt = select(MasterModel).where(MasterModel.id == master_id)
-        result = await session.execute(stmt)
-        master: MasterModel = result.scalar_one()
-    except Exception as e:
-        # print(e)
-        return {"ok": False, "message":"Ошибка при попытке полуения мастера"}
-    return {"ok": True, "master": MasterSchemaGet(id=master.id, name=master.name, surname=master.surname, patronymic=master.patronymic, phone=master.phone)}
-
-async def _get_all_masters(session: AsyncSession):
-    masters = []
-    try:
-        stmt = select(MasterModel.id, MasterModel.name, MasterModel.surname, MasterModel.patronymic, MasterModel.phone)
-        result = await session.execute(stmt)
-        data: list[MasterModel] = result.all()
-        for row in data:
-            masters.append(MasterSchemaGet(id=row.id, name=row.name, surname=row.surname, patronymic=row.patronymic, phone=row.phone))
-    except Exception as e:
-        return {"ok": False, "message":f"Ошибка при попытке полуения мастера - {e}"}
-    return {"ok": True, "masters": masters}
-        
-async def _check_master(MasterInfo: MasterSchemaCheck, session: AsyncSession):
-    try:
-        stmt = select(MasterModel).where(MasterModel.phone==MasterInfo.phone)
-        result = await session.execute(stmt)
-        master: MasterModel = result.scalar_one()
-        if master.verify_password(MasterInfo.password):
-            return {"ok": True, "verified": True, "message":"Данные подтверждены"}
-        else:
-            return {"ok": True, "verified": False, "message":"Данные не подтверждены"}
-    except NoResultFound:
-        return {"ok": False, "verified": False, "message":"Неверные данные"}
-    except Exception as e:
-        return {"ok": False, "verified": False, "message":f"Непредвиденая ошибка при проверке пользователя: {e}"}
-    
-async def _update_master(MasterInfo: MasterSchemaUpdate, session: AsyncSession):
-    try:
-        await session.execute(update(MasterModel), [{"id":MasterInfo.id, "phone": MasterInfo.phone, "name": MasterInfo.name, "surname": MasterInfo.surname, "patronymic": MasterInfo.patronymic}])
         await session.commit()
-    except Exception as e:
-        return {"ok": False, "message": f"При попытке обновления данных мастера была произведена ошибка - {e}"}
-    return {"ok": True, "message": "Мастер был успешно обновлен"}
+        await session.refresh(master)
+    except SQLAlchemyError as e:
+        await session.rollback()
+        return {"ok": False, "message": "Ошибка при обновлении мастера", "details": str(e)}
+    return {"ok": True, "master_id": master.id}
 
-async def _update_master_password(MasterInfo: MasterSchemaUpdatePassword, session: AsyncSession):
+async def get_master_by_id(master_id: int, session: AsyncSession) -> dict:
+    """
+    Возвращает одного мастера по ID, включая вложенные списки сертификатов и услуг.
+    """
+    try:
+        result = await session.execute(
+            select(MasterModel)
+            .options(
+                joinedload(MasterModel.certificates),  # подгружаем связанные сертификаты
+                joinedload(MasterModel.services)       # подгружаем связанные услуги
+            )
+            .where(MasterModel.id == master_id)
+        )
+        master: MasterModel | None = result.unique().scalar_one_or_none()
+        if not master:
+            return {"ok": False, "message": "Мастер не найден"}
+
+        # Валидируем ORM-объект мастер через Pydantic, благодаря вложенным схемам
+        master_dto = MasterGet.model_validate(master, from_attributes=True)
+        return {"ok": True, "master": master_dto}
+
+    except SQLAlchemyError as e:
+        return {"ok": False, "message": f"Непредвиденная ошибка при попытке получения мастера: {e}"}
+
+async def get_all_masters(session: AsyncSession) -> List[MasterGet]:
+    """
+    Возвращает список всех мастеров с вложенными сертификатами и услугами.
+    """
+    result = await session.execute(
+        select(MasterModel)
+        .options(
+            joinedload(MasterModel.certificates),
+            joinedload(MasterModel.services)
+        )
+    )
+    # Избавляемся от дублирования при joinedload
+    masters: List[MasterModel] = result.unique().scalars().all()
+
+    output: List[MasterGet] = []
+    for m in masters:
+        master_dto = MasterGet.model_validate(m, from_attributes=True)
+        output.append(master_dto)
+
+    return output
+
+async def delete_master(master_id: int, session: AsyncSession) -> dict:
+    master = await get_object_by_id(MasterModel, master_id, session)
+    if not master:
+        return {"ok": False, "message": "Мастер не найден"}
+    try:
+        await session.delete(master)
+        await session.commit()
+    except SQLAlchemyError as e:
+        await session.rollback()
+        return {"ok": False, "message": "Ошибка при удалении мастера", "details": str(e)}
+    return {"ok": True, "message": "Мастер удалён"}
+        
+async def check_master(master_info: MasterCheck, session: AsyncSession) -> dict:
+    """
+    Проверяет подлинность мастера по телефону или email + паролю.
+    """
+    try:
+        # Если в phoneemail есть '@', считаем это email, иначе — phone
+        if "@" in master_info.phoneemail:
+            stmt = select(MasterModel).where(MasterModel.email == master_info.phoneemail)
+        else:
+            stmt = select(MasterModel).where(MasterModel.phone == master_info.phoneemail)
+
+        result = await session.execute(stmt)
+        master: MasterModel = result.scalar_one()  # бросит NoResultFound, если не найден
+
+        if master.verify_password(master_info.password):
+            return {"ok": True, "verified": True, "message": "Данные подтверждены"}
+        else:
+            return {"ok": True, "verified": False, "message": "Данные не подтверждены"}
+
+    except NoResultFound:
+        return {"ok": False, "verified": False, "message": "Неверные данные"}
+    except Exception as e:
+        return {
+            "ok": False,
+            "verified": False,
+            "message": f"Непредвиденная ошибка при проверке пользователя: {e}"
+        }
+
+async def update_master_password(MasterInfo: MasterPasswordUpdate, session: AsyncSession):
     try:
         stmt = select(MasterModel).where(MasterModel.phone == MasterInfo.phone)
         result = await session.execute(stmt)

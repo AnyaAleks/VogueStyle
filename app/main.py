@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import request, master, user, service
+from routers import request, master, user, service, location, certificate
 from db.database import create_table
 
 
@@ -30,6 +30,8 @@ app.include_router(request.router)
 app.include_router(master.router)
 app.include_router(user.router)
 app.include_router(service.router)
+app.include_router(location.router)
+app.include_router(certificate.router)
 
 @app.get("/healthcheck")
 async def root():
