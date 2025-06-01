@@ -1,6 +1,40 @@
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
 from pydantic import BaseModel
+
+class MasterRequestGet(BaseModel):
+    id: int
+    name: str
+    surname: str
+    phone: str
+    
+    model_config = {
+        "from_attributes": True
+    }
+    
+class ServiceRequestGet(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    price: int
+    time_minutes: int
+
+    model_config = {
+        "from_attributes": True
+    }
+    
+class UserRequestGet(BaseModel):
+    id: int
+    name: str
+    surname: Optional[str]
+    patronymic: Optional[str]
+    birthday: Optional[date]
+    tg_id: Optional[int]
+    phone: str
+
+    model_config = {
+        "from_attributes": True
+    }
 
 class RequestCreate(BaseModel):
     master_id: int
@@ -16,11 +50,13 @@ class RequestUpdate(BaseModel):
 
 class RequestGet(BaseModel):
     id: int
-    master_id: int
-    service_id: int
-    user_id: int
+    master: MasterRequestGet
+    service: ServiceRequestGet
+    user: UserRequestGet
     schedule_at: datetime
 
     model_config = {
         "from_attributes": True
     }
+    
+RequestGet.model_rebuild()

@@ -24,7 +24,7 @@ async def get_service(
     result = await get_service_by_id(service_id, session)
     return result
 
-@router.get("", response_model=list[ServiceGet], name="Получение всех услуг")
+@router.get("", response_model=dict, name="Получение всех услуг")
 async def list_services(
     session: AsyncSessionDep
 ):

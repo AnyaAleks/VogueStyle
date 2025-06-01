@@ -1,5 +1,5 @@
 from typing import Optional, List
-from datetime import date
+from datetime import date, datetime
 from pydantic import constr, BaseModel
 
 class UserCreate(BaseModel):
@@ -18,6 +18,37 @@ class UserUpdate(BaseModel):
     tg_id: Optional[int] = None
     phone: Optional[constr(min_length=11, max_length=12)] = None
 
+class MasterRequestGet(BaseModel):
+    id: int
+    name: str
+    surname: str
+    phone: str
+    
+    model_config = {
+        "from_attributes": True
+    }
+    
+class ServiceRequestGet(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+    price: int
+    time_minutes: int
+
+    model_config = {
+        "from_attributes": True
+    }
+
+class RequestUserGet(BaseModel):
+    id: int
+    master: MasterRequestGet
+    service: ServiceRequestGet
+    schedule_at: datetime
+
+    model_config = {
+        "from_attributes": True
+    }
+
 class UserGet(BaseModel):
     id: int
     name: str
@@ -26,7 +57,7 @@ class UserGet(BaseModel):
     birthday: Optional[date]
     tg_id: Optional[int]
     phone: str
-    requests: List[int] = []
+    requests: List[RequestUserGet] = []
 
     model_config = {
         "from_attributes": True
@@ -35,3 +66,5 @@ class UserGet(BaseModel):
 class UserLink(BaseModel):
     phone: str
     tg_id: int
+    
+UserGet.model_rebuild()

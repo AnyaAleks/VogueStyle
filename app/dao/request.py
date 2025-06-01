@@ -2,6 +2,7 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from dto.request_schema import RequestCreate, RequestGet, RequestUpdate
 from models.request_model import RequestModel
 from .utility import get_object_by_id
@@ -38,13 +39,21 @@ async def get_request_by_id(request_id: int, session: AsyncSession) -> dict:
     return {"ok": True, "request": RequestGet.model_validate(req)}
 
 async def get_all_requests(session: AsyncSession) -> list[RequestGet]:
-    result = await session.execute(select(RequestModel))
-    reqs = result.scalars().all()
+    result = await session.execute(select(RequestModel).options(
+        joinedload(RequestModel.master),
+        joinedload(RequestModel.service),
+        joinedload(RequestModel.user)
+    ))
+    reqs = result.unique().scalars().all()
     return [RequestGet.model_validate(r) for r in reqs]
 
 async def get_all_actual_requests(session: AsyncSession) -> list[RequestGet]:
-    result = await session.execute(select(RequestModel).where(RequestModel.schedule_at >= datetime.today()))
-    reqs = result.scalars().all()
+    result = await session.execute(select(RequestModel).where(RequestModel.schedule_at >= datetime.today()).options(
+        joinedload(RequestModel.master),
+        joinedload(RequestModel.service),
+        joinedload(RequestModel.user)
+    ))
+    reqs = result.unique().scalars().all()
     return [RequestGet.model_validate(r) for r in reqs]
 
 async def delete_request(request_id: int, session: AsyncSession) -> dict:

@@ -1,4 +1,6 @@
-from sqlalchemy import Time, Integer, ForeignKey
+from datetime import time as Time
+
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from .base_model import Base
 

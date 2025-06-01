@@ -1,4 +1,6 @@
-from typing import List, Optional, Union
+from __future__ import annotations
+from typing import List, Optional, Union, Dict
+from datetime import time as Time
 from pydantic import Field, EmailStr, constr, field_validator, BaseModel
 from .certificate_schema import CertificateGet
 from .service_schema import ServiceGet
@@ -63,6 +65,7 @@ class MasterGet(BaseModel):
     phone: str
     email: Optional[EmailStr]
     photo_link: Optional[str]
+    available_slots: Dict = []
     certificates: List[CertificateGet] = []
     services: List[ServiceGet] = []
 

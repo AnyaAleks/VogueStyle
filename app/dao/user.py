@@ -5,7 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from models.user_model import UserModel
-from dto.user_schema import UserCreate, UserUpdate, UserGet
+from models.request_model import RequestModel
+from dto.user_schema import UserCreate, UserUpdate, UserGet, RequestUserGet, MasterRequestGet, ServiceRequestGet
 from .utility import get_object_by_id
 
 async def create_user(user_data: UserCreate, session: AsyncSession) -> dict:
@@ -34,20 +35,21 @@ async def update_user(user_id: int, data: UserUpdate, session: AsyncSession) -> 
         return {"ok": False, "message": "Ошибка при обновлении пользователя", "details": str(e)}
 
 async def get_user_by_id(user_id: int, session: AsyncSession) -> dict:
-    """
-    Возвращает одного пользователя по ID, включая список ID его запросов (requests).
-    """
     result = await session.execute(
         select(UserModel)
-        .options(joinedload(UserModel.requests))
+        .options(
+            joinedload(UserModel.requests)
+            .joinedload(RequestModel.master),
+            joinedload(UserModel.requests)
+            .joinedload(RequestModel.service)
+        )
         .where(UserModel.id == user_id)
     )
     user: Optional[UserModel] = result.unique().scalar_one_or_none()
     if not user:
         return {"ok": False, "message": "Пользователь не найден"}
 
-    # Собираем список ID запросов
-    request_ids: List[int] = [req.id for req in user.requests]
+    requests: List[RequestUserGet] = [await complete_request(req) for req in user.requests]
 
     data = {
         "id": user.id,
@@ -57,27 +59,29 @@ async def get_user_by_id(user_id: int, session: AsyncSession) -> dict:
         "birthday": user.birthday,
         "tg_id": user.tg_id,
         "phone": user.phone,
-        "requests": request_ids
+        "requests": requests
     }
 
     user_dto = UserGet.model_validate(data)
     return {"ok": True, "user": user_dto}
 
 async def get_user_by_tg_id(tg_id: int, session: AsyncSession) -> dict:
-    """
-    Возвращает одного пользователя по Telegram ID, включая список ID его запросов (requests).
-    """
     try:
         result = await session.execute(
             select(UserModel)
-            .options(joinedload(UserModel.requests))
+            .options(
+                joinedload(UserModel.requests)
+                .joinedload(RequestModel.master),
+                joinedload(UserModel.requests)
+                .joinedload(RequestModel.service)
+            )
             .where(UserModel.tg_id == tg_id)
         )
         user: Optional[UserModel] = result.unique().scalar_one_or_none()
         if not user:
             return {"ok": False, "message": "Пользователь не найден"}
 
-        request_ids: List[int] = [req.id for req in user.requests]
+        requests: List[RequestUserGet] = [await complete_request(req) for req in user.requests]
 
         data = {
             "id": user.id,
@@ -87,7 +91,7 @@ async def get_user_by_tg_id(tg_id: int, session: AsyncSession) -> dict:
             "birthday": user.birthday,
             "tg_id": user.tg_id,
             "phone": user.phone,
-            "requests": request_ids
+            "requests": requests
         }
 
         user_dto = UserGet.model_validate(data)
@@ -104,13 +108,16 @@ async def get_all_users(session: AsyncSession) -> List[UserGet]:
     Возвращает список всех пользователей с их списками ID запросов (requests).
     """
     result = await session.execute(
-        select(UserModel).options(joinedload(UserModel.requests))
+        select(UserModel).options(joinedload(UserModel.requests)
+        .joinedload(RequestModel.master),
+        joinedload(UserModel.requests)
+        .joinedload(RequestModel.service))
     )
     users: List[UserModel] = result.unique().scalars().all()
 
     output: List[UserGet] = []
     for user in users:
-        request_ids: List[int] = [req.id for req in user.requests]
+        requests: List[RequestUserGet] = [await complete_request(req) for req in user.requests]
 
         data = {
             "id": user.id,
@@ -120,12 +127,31 @@ async def get_all_users(session: AsyncSession) -> List[UserGet]:
             "birthday": user.birthday,
             "tg_id": user.tg_id,
             "phone": user.phone,
-            "requests": request_ids
+            "requests": requests
         }
 
         output.append(UserGet.model_validate(data))
 
     return output
+
+async def complete_request(request: RequestModel) -> RequestUserGet:
+    output = RequestUserGet(
+        id=request.id,
+        master=MasterRequestGet(
+            id=request.master.id, 
+            name=request.master.name, 
+            surname=request.master.surname, 
+            phone=request.master.phone),
+        service=ServiceRequestGet(
+            id=request.service.id, 
+            name=request.service.name,
+            description=request.service.description,
+            price=request.service.price,
+            time_minutes=request.service.time_minutes),
+        schedule_at=request.schedule_at
+    )
+    return output
+    
 
 async def delete_user(user_id: int, session: AsyncSession) -> dict:
     user = await get_object_by_id(UserModel, user_id, session)

@@ -1,14 +1,18 @@
 from typing import List
+from  datetime import date, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import joinedload
 from dto.master_schema import \
     MasterCheck, MasterUpdate, MasterCreate, MasterGet, MasterPasswordUpdate
 from dto.certificate_schema import CertificateGet
 from models.master_model import MasterModel
 from models.certificate_model import CertificateModel
+from models.masterschedule_model import MasterScheduleModel
+from models.request_model import RequestModel
 from .utility import get_object_by_id
+from services.available_slots import get_available_slots
 # from sqlalchemy.orm import selectinload
 
 async def create_master(master_data: MasterCreate, session: AsyncSession) -> dict:
@@ -75,11 +79,42 @@ async def get_all_masters(session: AsyncSession) -> List[MasterGet]:
     masters: List[MasterModel] = result.unique().scalars().all()
 
     output: List[MasterGet] = []
-    for m in masters:
-        master_dto = MasterGet.model_validate(m, from_attributes=True)
+    for m in masters:   
+        master_dto = MasterGet.model_validate(m)
+        
+        result = await session.execute(select(MasterScheduleModel).where(MasterScheduleModel.master_id == master_dto.id).order_by(MasterScheduleModel.weekday))
+        master_schedule: List[MasterScheduleModel] = result.scalars().all()
+        reordered_master_schedule = await replace_part_of_schedule(master_schedule)
+        
+        date_list = [date.today()+timedelta(days=i) for i in range(0,6)]
+        
+        result = await session.execute(select(RequestModel).where(func.date(RequestModel.schedule_at).in_(date_list),
+                                                                  RequestModel.master_id == master_dto.id))
+        requests = result.scalars().all()
+        master_dto.available_slots = {}
+        for schedule in master_schedule:
+            cleared_requests = []
+            for request in requests:
+                if request.schedule_at.date().isoweekday()-1 == schedule.weekday:
+                    cleared_requests.append(request)
+            master_dto.available_slots[f"{schedule.weekday}"] = await get_available_slots(schedule.start_time, schedule.end_time, cleared_requests, minutes_delta=30)
         output.append(master_dto)
 
     return output
+
+async def replace_part_of_schedule(master_schedule: List[MasterScheduleModel]) -> List[MasterScheduleModel]:
+    d = date.today()
+    weekday = d.isoweekday()-1
+    counter = 0
+    for schedule in master_schedule:
+        if weekday == schedule.weekday:
+            counter+=1
+            break
+        counter+=1
+    if len(master_schedule) == counter:
+        return master_schedule
+    return master_schedule[counter:]+master_schedule[:counter-1]
+    
 
 async def delete_master(master_id: int, session: AsyncSession) -> dict:
     master = await get_object_by_id(MasterModel, master_id, session)
@@ -108,7 +143,7 @@ async def check_master(master_info: MasterCheck, session: AsyncSession) -> dict:
         master: MasterModel = result.scalar_one()  # бросит NoResultFound, если не найден
 
         if master.verify_password(master_info.password):
-            return {"ok": True, "verified": True, "message": "Данные подтверждены"}
+            return {"ok": True, "verified": True, "master_id":master.id,"message": "Данные подтверждены"}
         else:
             return {"ok": True, "verified": False, "message": "Данные не подтверждены"}
 

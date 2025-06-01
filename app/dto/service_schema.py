@@ -1,5 +1,16 @@
-from typing import Optional
+from __future__ import annotations
+from typing import Optional, TYPE_CHECKING
 from pydantic import Field, BaseModel, constr
+
+class MasterServiceGet(BaseModel):
+    id: int
+    name: str
+    surname: str
+    phone: str
+    
+    model_config = {
+        "from_attributes": True
+    }
 
 class ServiceCreate(BaseModel):
     name: constr(max_length=64)
@@ -17,7 +28,7 @@ class ServiceUpdate(BaseModel):
 class ServiceGet(BaseModel):
     id: int
     name: str
-    master_id: int
+    master: MasterServiceGet
     description: Optional[str]
     price: int
     time_minutes: int
@@ -25,3 +36,5 @@ class ServiceGet(BaseModel):
     model_config = {
         "from_attributes": True
     }
+    
+ServiceGet.model_rebuild()
