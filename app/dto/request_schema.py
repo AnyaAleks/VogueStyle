@@ -28,7 +28,6 @@ class UserRequestGet(BaseModel):
     name: str
     surname: Optional[str]
     patronymic: Optional[str]
-    birthday: Optional[date]
     tg_id: Optional[int]
     phone: str
 

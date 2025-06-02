@@ -65,6 +65,40 @@ async def get_user_by_id(user_id: int, session: AsyncSession) -> dict:
     user_dto = UserGet.model_validate(data)
     return {"ok": True, "user": user_dto}
 
+async def get_user_by_phone(phone: str, session: AsyncSession) -> dict:
+    try:
+        result = await session.execute(select(UserModel).options(
+                joinedload(UserModel.requests)
+                .joinedload(RequestModel.master),
+                joinedload(UserModel.requests)
+                .joinedload(RequestModel.service)
+            ).where(UserModel.phone == phone))
+        user: Optional[UserModel] = result.unique().scalar_one_or_none()
+        if not user:
+            return {"ok": False, "message": "Пользователь не найден"}
+
+        requests: List[RequestUserGet] = [await complete_request(req) for req in user.requests]
+
+        data = {
+            "id": user.id,
+            "name": user.name,
+            "surname": user.surname,
+            "patronymic": user.patronymic,
+            "birthday": user.birthday,
+            "tg_id": user.tg_id,
+            "phone": user.phone,
+            "requests": requests
+        }
+
+        user_dto = UserGet.model_validate(data)
+        return {"ok": True, "user": user_dto}
+
+    except SQLAlchemyError as e:
+        return {
+            "ok": False,
+            "message": f"Ошибка при попытке получения пользователя по номеру телефона: {e}"
+        }
+
 async def get_user_by_tg_id(tg_id: int, session: AsyncSession) -> dict:
     try:
         result = await session.execute(

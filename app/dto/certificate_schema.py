@@ -8,11 +8,23 @@ class CertificateCreate(BaseModel):
 class CertificateUpdate(BaseModel):
     name: Optional[constr(max_length=100)] = None
 
+class MasterCertificateGet(BaseModel):
+    id: int
+    name: str
+    surname: str
+    phone: str
+    
+    model_config = {
+        "from_attributes": True
+    }
+
 class CertificateGet(BaseModel):
     id: int
     name: str
-    master_id: int
+    master: MasterCertificateGet
 
     model_config = {
         "from_attributes": True
     }
+    
+CertificateGet.model_rebuild()

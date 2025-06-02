@@ -1,7 +1,7 @@
 from typing import Annotated
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, Path, File, UploadFile, Depends
 from dao.master import \
-    create_master, get_all_masters, get_master_by_id, update_master, update_master_password, check_master
+    create_master, get_all_masters, get_master_by_id, update_master, update_master_password, check_master, set_master_photo, get_master_photo
 from dto.master_schema import MasterCheck, MasterCreate, MasterGet, MasterPasswordUpdate, MasterUpdate
 from .depends import AsyncSessionDep
 
@@ -10,10 +10,25 @@ router = APIRouter(
     tags=["Все, что свзяано с мастером"]
     )
 
+@router.post("/photo/{master_id}", response_model=dict, name="Установка фото мастера")
+async def set_photo(
+    master_id: int,
+    session: AsyncSessionDep,
+    photo: UploadFile = File()
+):
+    return await set_master_photo(master_id, photo, session)
+
+@router.get("/photo/{master_id}", name="Получение фото мастера")
+async def get_photo(
+    master_id: int,
+    session: AsyncSessionDep,
+):
+    return await get_master_photo(master_id, session)
+
 @router.post("", response_model=dict, name="Добавление мастера")
 async def post_create_master(
-    master_data: MasterCreate,
-    session: AsyncSessionDep
+    session: AsyncSessionDep,
+    master_data: MasterCreate
 ):
     return await create_master(master_data, session)
 
@@ -22,8 +37,7 @@ async def get_master(
     master_id: Annotated[int, Path(ge=1, lt=1_000_000)],
     session: AsyncSessionDep
 ):
-    result = await get_master_by_id(master_id, session)
-    return result
+    return await get_master_by_id(master_id, session)
 
 @router.get("", response_model=list[MasterGet], name="Получение всех мастеров")
 async def list_masters(
@@ -33,9 +47,9 @@ async def list_masters(
 
 @router.put("/id/{master_id}", response_model=dict, name="Обновление данных мастера")
 async def put_update_master(
+    session: AsyncSessionDep,
     master_id: Annotated[int, Path(ge=1, lt=1_000_000)],
-    master_data: MasterUpdate,
-    session: AsyncSessionDep
+    master_data: MasterUpdate
 ):
     return await update_master(master_id, master_data, session)
 

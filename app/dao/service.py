@@ -1,10 +1,51 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import SQLAlchemyError, NoResultFound
-from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy import select, insert
 from sqlalchemy.orm import joinedload
 from dto.service_schema import ServiceCreate, ServiceGet, ServiceUpdate, MasterServiceGet
+from dto.servicemaster_schema import ServiceMasterLink
 from models.service_model import ServiceModel
+from models.master_model import MasterModel
+from models.servicemaster_model import services_masters
 from .utility import get_object_by_id
+
+async def link_servicemaster(data: ServiceMasterLink, session: AsyncSession) -> dict:
+    try:
+        master_exists = await session.execute(
+            select(MasterModel.id).where(MasterModel.id == data.master_id)
+        )
+        if master_exists.scalar_one_or_none() is None:
+            return {"ok": False, "message": f"Мастер с id={data.master_id} не найден."}
+        
+        service_exists = await session.execute(
+            select(ServiceModel.id).where(ServiceModel.id == data.service_id)
+        )
+        if service_exists.scalar_one_or_none() is None:
+            return {"ok": False, "message": f"Услуга с id={data.service_id} не найдена."}
+        
+        stmt = (
+            insert(services_masters)
+            .values(master_id=data.master_id, service_id=data.service_id)
+        )
+        await session.execute(stmt)
+        await session.commit()
+        return {
+            "ok": True,
+            "message": "Связь мастер ↔ услуга успешно создана.",
+            "link": {"master_id": data.master_id, "service_id": data.service_id}
+        }
+    except IntegrityError as e:
+        await session.rollback()
+        
+        return {
+            "ok": False,
+            "message": f"Невозможно создать связь (возможно, такого мастера или услуги нет, "
+                       f"или связь уже существует). Детали ошибки: {e.orig}"
+        }
+
+    except SQLAlchemyError as e:
+        await session.rollback()
+        return {"ok": False, "message": f"Непредвиденная ошибка БД: {e}"}
 
 async def create_service(service_data: ServiceCreate, session: AsyncSession) -> dict:
     svc = ServiceModel(**service_data.model_dump())
@@ -36,14 +77,17 @@ async def get_service_by_id(service_id: int, session: AsyncSession) -> dict:
         result = await session.execute(select(ServiceModel)
                                        .where(ServiceModel.id == service_id)
                                        .options(
-                                           joinedload(ServiceModel.master)
+                                           joinedload(ServiceModel.masters)
                                            ))
-        svc: ServiceModel | None = result.scalar_one_or_none()
-        master_schema: MasterServiceGet = MasterServiceGet.model_validate(svc.master)
+        svc: ServiceModel | None = result.unique().scalar_one_or_none()
+        master_list = [
+                MasterServiceGet.model_validate(master, from_attributes=True)
+                for master in svc.masters
+            ]
         service_schema: ServiceGet = ServiceGet(
             id=svc.id,
             name=svc.name,
-            master=master_schema,
+            masters=master_list,
             description=svc.description,
             price=svc.price,
             time_minutes=svc.time_minutes
@@ -57,16 +101,19 @@ async def get_service_by_id(service_id: int, session: AsyncSession) -> dict:
 async def get_all_services(session: AsyncSession) -> dict:
     result = await session.execute(select(ServiceModel)
                                    .options(
-                                       joinedload(ServiceModel.master)
+                                       joinedload(ServiceModel.masters)
                                        ))
-    svcs = result.scalars().all()
+    svcs = result.unique().scalars().all()
     output = []
     for svc in svcs:
-        master_schema: MasterServiceGet = MasterServiceGet.model_validate(svc.master)
+        master_list = [
+                MasterServiceGet.model_validate(master, from_attributes=True)
+                for master in svc.masters
+            ]
         service_schema: ServiceGet = ServiceGet(
             id=svc.id,
             name=svc.name,
-            master=master_schema,
+            masters=master_list,
             description=svc.description,
             price=svc.price,
             time_minutes=svc.time_minutes

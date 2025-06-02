@@ -1,8 +1,9 @@
 from __future__ import annotations
 from typing import List, TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
-from sqlalchemy import String, Integer, ForeignKey
+from sqlalchemy import String, Integer
 from .base_model import Base
+from .servicemaster_model import services_masters
 
 if TYPE_CHECKING:
     from .request_model import RequestModel
@@ -10,11 +11,9 @@ if TYPE_CHECKING:
 
 class ServiceModel(Base):
     __tablename__ = "services"
-
+    
+    masters: Mapped[List["MasterModel"]] = relationship("MasterModel", secondary=services_masters, back_populates="services")
     requests: Mapped[List["RequestModel"]] = relationship("RequestModel", back_populates="service")
-
-    master_id: Mapped[int] = mapped_column(ForeignKey("masters.id"))
-    master: Mapped["MasterModel"] = relationship("MasterModel", back_populates="services")
 
     name: Mapped[str] = mapped_column(String(64), nullable=False)
     description: Mapped[str] = mapped_column(String(256), nullable=True)

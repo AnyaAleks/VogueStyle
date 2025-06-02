@@ -27,12 +27,12 @@ async def post_create_master_schedule(
     return await create_master_schedule(schedule_data, session)
 
 
-@router.get("/id/{schedule_id}", response_model=dict, name="Получение расписания по id")
+@router.get("/id/{master_id}", response_model=dict, name="Получение расписания по id мастера")
 async def get_master_schedule(
-    schedule_id: Annotated[int, Path(ge=1, lt=1_000_000)],
+    master_id: Annotated[int, Path(ge=1, lt=1_000_000)],
     session: AsyncSessionDep
 ):
-    return await get_master_schedule_by_id(schedule_id, session)
+    return await get_master_schedule_by_id(master_id, session)
 
 
 @router.get("", response_model=list[MasterScheduleGet], name="Получение всех расписаний")

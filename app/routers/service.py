@@ -1,7 +1,8 @@
 from typing import Annotated
 from fastapi import APIRouter, Path
 from dto.service_schema import ServiceCreate, ServiceGet, ServiceUpdate
-from dao.service import get_all_services, create_service, update_service, get_service_by_id
+from dto.servicemaster_schema import ServiceMasterLink
+from dao.service import get_all_services, create_service, update_service, get_service_by_id, link_servicemaster
 from .depends import AsyncSessionDep
 
 router = APIRouter(
@@ -15,6 +16,13 @@ async def post_create_service(
     session: AsyncSessionDep
 ):
     return await create_service(service_data, session)
+
+@router.post("/link", response_model=dict, name="Связка мастера и услуги")
+async def link_service_with_master(
+    data: ServiceMasterLink,
+    session: AsyncSessionDep
+):
+    return await link_servicemaster(data, session)
 
 @router.get("/id/{service_id}", response_model=dict, name="Получение услуги по id")
 async def get_service(

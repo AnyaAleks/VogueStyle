@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, List
 from pydantic import Field, BaseModel, constr
 
 class MasterServiceGet(BaseModel):
@@ -14,7 +14,6 @@ class MasterServiceGet(BaseModel):
 
 class ServiceCreate(BaseModel):
     name: constr(max_length=64)
-    master_id: int
     description: Optional[constr(max_length=256)] = None
     price: int = Field(..., ge=0)
     time_minutes: int = Field(..., ge=0)
@@ -28,7 +27,7 @@ class ServiceUpdate(BaseModel):
 class ServiceGet(BaseModel):
     id: int
     name: str
-    master: MasterServiceGet
+    masters: List[MasterServiceGet]
     description: Optional[str]
     price: int
     time_minutes: int

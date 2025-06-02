@@ -8,6 +8,7 @@ from .base_model import Base
 # Здесь мы всё ещё можем импортировать LocationModel «боевым» путём,
 # потому что у LocationModel уже нет прямого импорта MasterModel
 from .location_model import LocationModel
+from .servicemaster_model import services_masters
 
 # Но для других моделей (RequestModel, ServiceModel, CertificateModel) рекомендуется использовать строковые связи.
 PASSLIB_CONTEXT = CryptContext(
@@ -22,7 +23,7 @@ class MasterModel(Base):
     # можно писать List["RequestModel"], не импортируя RequestModel напрямую.
     requests: Mapped[List["RequestModel"]] = relationship("RequestModel", back_populates="master")
     certificates: Mapped[List["CertificateModel"]] = relationship("CertificateModel", back_populates="master")
-    services: Mapped[List["ServiceModel"]] = relationship("ServiceModel", back_populates="master")
+    services: Mapped[List["ServiceModel"]] = relationship("ServiceModel", secondary=services_masters, back_populates="masters")
 
     location_id: Mapped[int] = mapped_column(ForeignKey("locations.id"))
     # Здесь можно указывать полноценный класс LocationModel, потому что LocationModel не импортирует этот модуль в ответ

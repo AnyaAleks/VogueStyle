@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Path
 from dto.user_schema import UserCreate, UserGet, UserUpdate, UserLink
-from dao.user import create_user, get_all_users, get_user_by_id, link_telegram_user, update_user, get_user_by_tg_id
+from dao.user import create_user, get_all_users, get_user_by_id, link_telegram_user, update_user, get_user_by_tg_id, get_user_by_phone
 from .depends import AsyncSessionDep
 
 router = APIRouter(
@@ -23,6 +23,13 @@ async def get_user_by_tg(
 ):
     result = await get_user_by_tg_id(user_tg_id, session)
     return result
+
+@router.get("/phone/{phone}", response_model=dict, name="Получение пользователя по номеру телефона")
+async def get_user_byphone(
+    phone: str,
+    session: AsyncSessionDep
+):
+    return await get_user_by_phone(phone, session)
 
 @router.get("", response_model=list[UserGet], name="Получение всех пользователей")
 async def get_all_user(

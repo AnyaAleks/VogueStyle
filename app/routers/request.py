@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import APIRouter, Path
 from dto.request_schema import RequestCreate, RequestGet, RequestUpdate
-from dao.request import create_request, update_request, get_request_by_id, get_all_requests, get_all_actual_requests
+from dao.request import create_request, delete_request, update_request, get_request_by_id, get_all_requests, get_all_actual_requests
 from .depends import AsyncSessionDep
 
 router = APIRouter(
@@ -42,3 +42,10 @@ async def list_requests(
     session: AsyncSessionDep
 ):
     return await get_all_requests(session)
+
+@router.delete("/id/{request_id}", response_model=dict, name="Удаление записи")
+async def delete_request_endpoint(
+    request_id: Annotated[int, Path(ge=1, lt=1_000_000)],
+    session: AsyncSessionDep
+):
+    return await delete_request(request_id, session)
