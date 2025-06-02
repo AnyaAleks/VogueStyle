@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Path, File, UploadFile, Depends
+from fastapi import APIRouter, Path, File, UploadFile, Depends, Request
 from dao.master import \
     create_master, get_all_masters, get_master_by_id, update_master, update_master_password, check_master, set_master_photo, get_master_photo
 from dto.master_schema import MasterCheck, MasterCreate, MasterGet, MasterPasswordUpdate, MasterUpdate
@@ -22,8 +22,9 @@ async def set_photo(
 async def get_photo(
     master_id: int,
     session: AsyncSessionDep,
+    req: Request
 ):
-    return await get_master_photo(master_id, session)
+    return await get_master_photo(master_id, session, req)
 
 @router.post("", response_model=dict, name="Добавление мастера")
 async def post_create_master(

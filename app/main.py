@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from routers import request, master, user, service, location, certificate, masterschedule
+from routers import request, master, user, service, location, certificate, masterschedule, tg
 from db.database import create_table
 
 
@@ -33,6 +34,9 @@ app.include_router(service.router)
 app.include_router(location.router)
 app.include_router(certificate.router)
 app.include_router(masterschedule.router)
+app.include_router(tg.router)
+
+app.mount("/static", StaticFiles(directory="uploads"), name="static")
 
 @app.get("/healthcheck")
 async def root():

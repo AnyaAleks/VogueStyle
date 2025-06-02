@@ -1,11 +1,12 @@
 from typing import List
 from datetime import date, timedelta
+from urllib.parse import quote
 import shutil, os, uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from sqlalchemy import select, func
 from sqlalchemy.orm import joinedload
-from fastapi import UploadFile
+from fastapi import UploadFile, Request
 from fastapi.responses import FileResponse
 from dto.master_schema import \
     MasterCheck, MasterUpdate, MasterCreate, MasterGet, MasterPasswordUpdate
@@ -17,6 +18,8 @@ from services.available_slots import get_available_slots
 # from sqlalchemy.orm import selectinload
 
 UPLOAD_DIR = "uploads/masters"
+STATIC_URL_PREFIX = "/static"
+STATIC_FS_ROOT = "uploads"  # Отсюда раздаются файлы FastAPI
 
 async def create_master(master_data: MasterCreate, session: AsyncSession) -> dict:
     master = MasterModel(**master_data.model_dump())
@@ -160,40 +163,54 @@ async def set_master_photo(master_id: int, photo: UploadFile, session: AsyncSess
     try:
         result = await session.execute(select(MasterModel).where(MasterModel.id == master_id))
         master = result.scalar_one()
-        if photo:
-            # Удаление старой фотографии
-            if master.photo_link and os.path.exists(master.photo_link):
-                try:
-                    os.remove(master.photo_link)
-                except Exception as e:
-                    return {"ok": False, "message": f"Ошибка при удалении старого файла: {e}"}
 
-            # Сохранение новой фотографии
+        if photo:
+            # Удаление старого файла по абсолютному пути
+            if master.photo_link:
+                old_path = os.path.join(STATIC_FS_ROOT, master.photo_link)
+                if os.path.exists(old_path):
+                    try:
+                        os.remove(old_path)
+                    except Exception as e:
+                        return {"ok": False, "message": f"Ошибка при удалении старого фото: {e}"}
+
+            # Сохранение нового файла
             ext = os.path.splitext(photo.filename)[1]
             filename = f"{uuid.uuid4().hex}_{master.id}{ext}"
-            file_path = os.path.join(UPLOAD_DIR, filename)
+            relative_path = f"masters/{filename}"
+            file_path = os.path.join(STATIC_FS_ROOT, relative_path)
 
-            os.makedirs(UPLOAD_DIR, exist_ok=True)
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(photo.file, buffer)
 
-            master.photo_link = file_path
+            # Сохраняем относительный путь (не полный путь)
+            master.photo_link = relative_path
             await session.commit()
             await session.refresh(master)
-            return {"ok": True, "message":f"Мастеру с id:{master_id} была установлена фотография"}
+
+            return {
+                "ok": True,
+                "message": f"Фото для мастера {master_id} установлено",
+                "photo_link": f"{STATIC_URL_PREFIX}/{quote(relative_path)}"
+            }
+
+        return {"ok": False, "message": "Файл фото не был предоставлен"}
+
     except NoResultFound:
-        return {"ok": False, "message":f"Мастер с id:{master_id} не был найден"}
+        return {"ok": False, "message": f"Мастер с id {master_id} не найден"}
+
     except Exception as e:
-        return {"ok": False, "message": f"Произошла ошибка при сохранении фотографии: {e}"}
+        return {"ok": False, "message": f"Ошибка при сохранении фото: {e}"}
     
-async def get_master_photo(master_id: int, session: AsyncSession):
+async def get_master_photo(master_id: int, session: AsyncSession, request: Request):
     master: MasterModel = await get_object_by_id(MasterModel, master_id, session)
+
     if not master.photo_link:
-        return {"ok": False, "message": "У мастер не установлена фотография"}
-    file_path = master.photo_link
-    if not os.path.exists(file_path):
-        return {"ok": False, "message": "Перезапишите фото мастера пожалуйста"}
-    return FileResponse(file_path, media_type="image/jpeg")
+        return {"ok": False, "message": "У мастера не установлена фотография"}
+
+    static_url = request.url_for("static", path=master.photo_link)
+    return {"ok": True, "photo_url": static_url}
     
 
 async def delete_master(master_id: int, session: AsyncSession) -> dict:

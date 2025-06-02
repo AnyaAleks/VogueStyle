@@ -33,7 +33,12 @@ async def update_request(request_id: int, data: RequestUpdate, session: AsyncSes
     return {"ok": True, "request_id": req.id}
 
 async def get_request_by_id(request_id: int, session: AsyncSession) -> dict:
-    req = await get_object_by_id(RequestModel, request_id, session)
+    result = await session.execute(select(RequestModel).options(
+        joinedload(RequestModel.master),
+        joinedload(RequestModel.service),
+        joinedload(RequestModel.user)
+    ).where(RequestModel.id == request_id))
+    req: RequestModel | None = result.unique().scalar_one_or_none()
     if not req:
         return {"ok": False, "message": "Запрос не найден"}
     return {"ok": True, "request": RequestGet.model_validate(req)}
