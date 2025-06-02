@@ -47,7 +47,7 @@ async def get_user_by_id(user_id: int, session: AsyncSession) -> dict:
     )
     user: Optional[UserModel] = result.unique().scalar_one_or_none()
     if not user:
-        return {"ok": False, "message": "Пользователь не найден"}
+            return {"ok": True, "user": None}
 
     requests: List[RequestUserGet] = [await complete_request(req) for req in user.requests]
 
@@ -75,7 +75,7 @@ async def get_user_by_phone(phone: str, session: AsyncSession) -> dict:
             ).where(UserModel.phone == phone))
         user: Optional[UserModel] = result.unique().scalar_one_or_none()
         if not user:
-            return {"ok": False, "message": "Пользователь не найден"}
+            return {"ok": True, "user": None}
 
         requests: List[RequestUserGet] = [await complete_request(req) for req in user.requests]
 
@@ -113,7 +113,7 @@ async def get_user_by_tg_id(tg_id: int, session: AsyncSession) -> dict:
         )
         user: Optional[UserModel] = result.unique().scalar_one_or_none()
         if not user:
-            return {"ok": False, "message": "Пользователь не найден"}
+            return {"ok": True, "user": None}
 
         requests: List[RequestUserGet] = [await complete_request(req) for req in user.requests]
 
