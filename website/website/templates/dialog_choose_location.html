@@ -1,0 +1,67 @@
+<!--<div class="dialog-container">-->
+<!--    &lt;!&ndash; Кнопка "Назад" &ndash;&gt;-->
+<!--    <button class="back-button">-->
+<!--        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">-->
+<!--            <path d="M15 18L9 12L15 6" stroke="#4285F4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>-->
+<!--        </svg>-->
+<!--    </button>-->
+
+<!--    &lt;!&ndash; Заголовок &ndash;&gt;-->
+<!--    <h3 class="dialog-title">Выберите адрес</h3>-->
+
+<!--    &lt;!&ndash; Список локаций &ndash;&gt;-->
+<!--    <div class="location-list">-->
+<!--        <div class="location" onclick="selectLocation(this)">-->
+<!--            <div class="location-name">Салон VogueStyle в Центре города</div>-->
+<!--            <div class="location-address">ул. Большая Морская 67, Санкт-Петербург</div>-->
+<!--        </div>-->
+
+<!--        <div class="location" onclick="selectLocation(this)">-->
+<!--            <div class="location-name">Салон VogueStyle на Московской</div>-->
+<!--            <div class="location-address">Гастелло ул. 15, Санкт-Петербург</div>-->
+<!--        </div>-->
+
+<!--        <div class="location" onclick="selectLocation(this)">-->
+<!--            <div class="location-name">Салон VogueStyle на Московской</div>-->
+<!--            <div class="location-address">Ленсовета ул. 14, Санкт-Петербург</div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+<!--<script>-->
+<!--    function selectLocation(element) {-->
+<!--        // Убираем выделение у всех локаций-->
+<!--        document.querySelectorAll('.location').forEach(loc => {-->
+<!--            loc.classList.remove('selected');-->
+<!--        });-->
+
+<!--        // Добавляем выделение выбранной локации-->
+<!--        element.classList.add('selected');-->
+
+<!--        // Здесь можно добавить дополнительную логику при выборе локации-->
+<!--    }-->
+<!--</script>-->
+
+<div class="popup-content">
+       <!-- Заголовок с данными услуги -->
+    <h3 class="dialog-title">Выберите адрес для услуги: <span id="selected-service-name"></span></h3>
+    <p class="service-price-info">Стоимость: <span id="selected-service-price"></span> ₽</p>
+
+    <!-- Список локаций -->
+    <div class="location-list">
+        <div class="location" onclick="selectLocation(this, 'Центр города')">
+            <div class="location-name">Салон VogueStyle в Центре города</div>
+            <div class="location-address">ул. Большая Морская 67, Санкт-Петербург</div>
+        </div>
+
+        <div class="location" onclick="selectLocation(this, 'Московская')">
+            <div class="location-name">Салон VogueStyle на Московской</div>
+            <div class="location-address">Гастелло ул. 15, Санкт-Петербург</div>
+        </div>
+
+        <div class="location" onclick="selectLocation(this, 'Ленсовета')">
+            <div class="location-name">Салон VogueStyle на Московской</div>
+            <div class="location-address">Ленсовета ул. 14, Санкт-Петербург</div>
+        </div>
+    </div>
+</div>

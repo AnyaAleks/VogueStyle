@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет мастера{% endblock %}
+
+{% block content %}
+<div class="lk-container">
+    <h1 class="lk-title">Личные данные</h1>
+    <form class="lk-form" method="POST" enctype="multipart/form-data">
+        <div class="lk-form-layout">
+            <!-- Левая колонка (фото и кнопки) -->
+            <div class="lk-left-column">
+                <div class="lk-photo-preview">
+                    {% if master.photo %}
+                        <img id="photo-preview" src="{{ url_for('static', filename=master.photo) }}" alt="Фото мастера" class="lk-photo">
+                    {% else %}
+                        <div id="photo-preview" class="lk-photo-placeholder">
+                            <span>Фото не загружено</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="lk-photo-actions">
+                    <input type="file" id="photo-upload" name="photo" accept="image/*" style="display: none;">
+                    <button type="button" class="lk-btn lk-btn-upload" onclick="document.getElementById('photo-upload').click()">
+                        ЗАГРУЗИТЬ ФОТО
+                    </button>
+                    <button type="button" class="lk-btn lk-btn-delete" id="delete-photo">
+                        УДАЛИТЬ
+                    </button>
+                </div>
+            </div>
+
+            <!-- Правая колонка (текстовые поля) -->
+            <div class="lk-right-column">
+                <div class="lk-form-group">
+                    <label class="lk-label">Фамилия</label>
+                    <input type="text" class="lk-input" name="last_name"
+                           value="{{ master.last_name if master.last_name else '' }}">
+                </div>
+
+                <div class="lk-form-group">
+                    <label class="lk-label">Имя</label>
+                    <input type="text" class="lk-input" name="first_name"
+                           value="{{ master.first_name if master.first_name else '' }}">
+                </div>
+
+                <div class="lk-form-group">
+                    <label class="lk-label">Отчество</label>
+                    <input type="text" class="lk-input" name="middle_name"
+                           value="{{ master.middle_name if master.middle_name else '' }}">
+                </div>
+
+                <div class="lk-form-group">
+                    <label class="lk-label">Дата рождения</label>
+                    <input type="date" class="lk-input" name="birth_date"
+                           value="{{ master.birth_date if master.birth_date else '' }}">
+                </div>
+
+                <div class="lk-form-group">
+                    <label class="lk-label">Адрес</label>
+                    <input type="text" class="lk-input" name="address"
+                           value="{{ master.address if master.address else '' }}">
+                </div>
+
+                <div class="lk-form-group">
+                    <label class="lk-label">E-mail</label>
+                    <input type="email" class="lk-input" name="email"
+                           value="{{ master.email if master.email else '' }}">
+                </div>
+
+                <div class="lk-form-group">
+                    <label class="lk-label">Телефон</label>
+                    <input type="tel" class="lk-input" name="phone"
+                           value="{{ master.phone if master.phone else '' }}">
+                </div>
+            </div>
+        </div>
+
+        <div class="lk-action-buttons">
+            <button type="button" class="lk-btn lk-btn-save" id="save-information">
+                СОХРАНИТЬ ИЗМЕНЕНИЯ
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

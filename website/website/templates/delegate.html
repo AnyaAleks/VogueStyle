@@ -1,0 +1,18 @@
+<!-- delegate.html -->
+<div class="service-card">
+    <div class="service-card-content">
+        <h3 class="service-name">{{ service.name }}</h3>
+        <div class="service-price-container">
+            <span class="service-price">{{ service.price }}</span>
+            <span class="service-price-period">₽ / сеанс</span>
+        </div>
+        <button class="book-button" onclick="showDialog('{{ service.name }}', {{ service.price }})">
+            Записаться онлайн </i>
+        </button>
+    </div>
+</div>
+
+<!-- Диалоговое окно -->
+    <dialog id="pop-up" class="popup-dialog">
+        <div id="dialog-content"></div>
+    </dialog>

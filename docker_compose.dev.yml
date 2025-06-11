@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:12.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=voguestyle
+    expose: 
+      - 5432
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./backend/app:/app
+    depends_on:
+      - db
+    ports:
+      - 8000:8000
+    healthcheck:
+      test: ["CMD", "curl", "-f","http://localhost:8000/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+  tg_bot:
+    build:
+      context: ./tg_bot
+      dockerfile: Dockerfile
+    volumes:
+      - ./tg_bot/bot:/bot
+    depends_on:
+      - backend
+    command: python main.py
+
+  # website:
+  #   build:
+  #     context: ./website
+  #     dockerfile: Dockerfile.dev
+  #   volumes:
+  #     - ./website/website:/website
+  #   environment:
+  #     - backend-ip=backend
+  #   ports:
+  #     - 5000:5000
+  #   depends_on:
+  #     - backend
+  #   command: waitress-serve --listen=0.0.0.0:5000 app:app
+
+volumes:
+  postgres_data:

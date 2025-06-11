@@ -1,0 +1,44 @@
+<!--&lt;!&ndash; dialog_second_page.html &ndash;&gt;-->
+<!--<dialog id="pop-up" class="popup-dialog">-->
+<!--    <div class="popup-content">-->
+<!--        <h3>Подтверждение записи</h3>-->
+<!--        <p>Вы записываетесь на: <span id="popup-service-name"></span></p>-->
+<!--        <p>Цена: <span id="popup-service-price"></span> ₽</p>-->
+
+<!--        <div class="form-group">-->
+<!--            <label for="appointment-date">Выберите дату:</label>-->
+<!--            <input type="date" id="appointment-date" class="popup-input">-->
+<!--        </div>-->
+
+<!--        <div class="form-group">-->
+<!--            <label for="appointment-time">Выберите время:</label>-->
+<!--            <input type="time" id="appointment-time" class="popup-input">-->
+<!--        </div>-->
+
+<!--        <div class="popup-buttons">-->
+<!--            <button onclick="confirmAppointment()">Подтвердить</button>-->
+<!--            <button onclick="goBackToFirstPage()">Назад</button>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</dialog>-->
+
+<div class="popup-content">
+    <h3>Подтверждение записи</h3>
+    <p>Услуга: <span id="popup-service-name"></span></p>
+    <p>Цена: <span id="popup-service-price"></span> ₽</p>
+
+    <div class="form-group">
+        <label for="appointment-date">Выберите дату:</label>
+        <input type="date" id="appointment-date" class="popup-input">
+    </div>
+
+    <div class="form-group">
+        <label for="appointment-time">Выберите время:</label>
+        <input type="time" id="appointment-time" class="popup-input">
+    </div>
+
+    <div class="popup-buttons">
+        <button onclick="confirmAppointment()">Подтвердить</button>
+        <button onclick="loadFirstDialogPage()">Назад</button>
+    </div>
+</div>

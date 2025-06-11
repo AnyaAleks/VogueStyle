@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Мастера{% endblock %}
+
+{% block content %}
+<div class="about-header-container">
+    <div class="width-h">
+        <div class="about-header">
+            <h1>Мастера</h1>
+        </div>
+
+        <div class="salon-width-h">
+            <div class="master-h-container">
+                <div class="qualification-card">
+                    <h3>Повышение квалификации</h3>
+                    <p class="qualification-text">
+                        Мы регулярно обучаем мастеров – они проходят курсы повышения квалификации и имеют одинаково высокий уровень профессионализма
+                    </p>
+                </div>
+
+                <div class="qualification-card">
+                    <h3>Единые стандарты</h3>
+                    <p class="qualification-text">
+                        При студии работает преподаватель-технолог, поэтому все мастера работают в одной технике
+                    </p>
+                </div>
+            </div>
+
+            <div class="masters">
+                <div class="masters-card-style">
+                    {% for master in masters %}
+                        {% include "master_addition.html" %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

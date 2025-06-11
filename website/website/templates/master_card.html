@@ -1,0 +1,15 @@
+<div class="slide">
+    <div class="master-photo">
+        {% if master.photo %}
+            <img src="https://ania.cleverlive.pro/VogueStyle_MastersPhoto/{{ master.photo }}"
+                 alt="{{ master.name }}"
+                 class="master-photo-img">
+        {% else %}
+            <div class="no-photo">Нет фото</div>
+        {% endif %}
+    </div>
+    <div class="master-info">
+        <h3 class="master-name">{{ master.name }}</h3>
+        <p class="master-specialty">{{ master.specialization }}</p>
+    </div>
+</div>

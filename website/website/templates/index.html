@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}VogueStyle{% endblock %}
+
+{% block content %}
+<div class="header-container">
+    <div class="width">
+        <section class="hero">
+            <h1 class="hero-title">VogueStyle</h1>
+            <p class="hero-subtitle">Наслаждайтесь каждым мгновением с нами!</p>
+        </section>
+    </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="width">
+    <div class="services">
+        <div class="services-container">
+            <h2 class="slider-title">Наши услуги</h2>
+            <div class="services-grid">
+                {% for service in services %}
+                    {% include "delegate.html" %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="width-add">
+    <section class="masters-slider">
+        <h2 class="slider-title">Наши мастера</h2>
+        <div class="slider-container" id="sliderContainer">
+            {% for master in masters %}
+                {% include "master_card.html" %}
+            {% endfor %}
+        </div>
+        <div class="slider-nav">
+            <button class="slider-arrow" id="prevSlide">←</button>
+            <button class="slider-arrow" id="nextSlide">→</button>
+        </div>
+    </section>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const slider = document.getElementById('sliderContainer');
+        const prevBtn = document.getElementById('prevSlide');
+        const nextBtn = document.getElementById('nextSlide');
+        const slideWidth = 280 + 30; // Ширина слайда + отступ
+
+        prevBtn.addEventListener('click', () => {
+            slider.scrollBy({ left: -slideWidth, behavior: 'smooth' });
+        });
+
+        nextBtn.addEventListener('click', () => {
+            slider.scrollBy({ left: slideWidth, behavior: 'smooth' });
+        });
+    });
+</script>
+
+{% endblock %}
+

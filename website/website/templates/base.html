@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}VogueStyle{% endblock %}</title>
+
+
+<!--    Надо придумать и вставить картинку-->
+    <link rel="icon" href="https://ania.cleverlive.pro/VogueStyle_application/background_waves.jpg" type="image/jpeg">
+
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    <!-- Новая навигационная панель -->
+    <nav class="navbar">
+        <div class="mobile-header">
+            <button class="menu-btn">
+                <span class="hamburger"></span>
+            </button>
+        </div>
+
+        <div class="mobile-menu">
+            <button class="close-btn">×</button>
+            <a href="/" class="mobile-nav-item">На главную</a>
+            <a href="/request" class="mobile-nav-item {% if request.path == '/request' %}active{% endif %}">Запись</a>
+            <a href="/about" class="mobile-nav-item {% if request.path == '/about' %}active{% endif %}">О нас</a>
+            <a href="/masters" class="mobile-nav-item {% if request.path == '/masters' %}active{% endif %}">Наши Мастера</a>
+            <div class="mobile-nav-item">
+                Салоны
+                <div class="mobile-dropdown-container">
+                    <a href="/salons/bm" class="mobile-dropdown-item">Большая Морская ул., 67</a>
+                    <a href="/salons/gasta" class="mobile-dropdown-item">ул. Гастелло, 15</a>
+                    <a href="/salons/lensa" class="mobile-dropdown-item">ул. Ленсовета, 14</a>
+                </div>
+            </div>
+            {% if site_version == 'master' %}
+                <a href="/master/personal_account_master" class="mobile-nav-item {% if request.path == '/master/personal_account_master' %}active{% endif %}">ЛК</a>
+            {% endif %}
+        </div>
+
+        <div class="nav-container">
+            <ul class="nav-menu">
+                <div class="nav-menu-left">
+                    <li class="nav-item"><a href="/request" class="nav-link {% if request.path == '/request' %}active{% endif %}">Запись</a></li>
+                    <li class="nav-item"><a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}">О нас</a></li>
+
+
+                </div>
+
+                <!-- Логотип в середине меню -->
+                <li class="nav-logo">
+                    <a href="/"><img src="https://ania.cleverlive.pro/VogueStyle_application/vogueStyleBeautySalon_white.jpg" alt="VogueStyle" class="nav-logo-img"></a>
+                </li>
+
+                <div class="nav-menu-right">
+                    <li class="nav-item"><a href="/masters" class="nav-link {% if request.path == '/masters' %}active{% endif %}">Наши Мастера</a></li>
+                    <li class="nav-item dropdown">
+                        <a href="#" class="nav-link">Салоны</a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/salons/bm" class="dropdown-item">Большая Морская ул., 67 </a></li>
+                            <li><a href="/salons/gasta" class="dropdown-item">ул. Гастелло, 15</a></li>
+                            <li><a href="/salons/lensa" class="dropdown-item">ул. Ленсовета, 14</a></li>
+                        </ul>
+                    </li>
+
+                    {% if site_version == 'master' %}
+                        <li class="nav-item"><a href="/master/personal_account_master" class="nav-link {% if request.path == '/master/personal_account_master' %}active{% endif %}">ЛК</a></li>
+                    {% endif %}
+                </div>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Блок для основного содержимого -->
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+<footer class="footer">
+    <div class="footer-container">
+        <div class="footer-top">
+            <div class="footer-logo">
+                <img src="https://ania.cleverlive.pro/VogueStyle_application/vogueStyleBeautySalon_trans.png" alt="VogueStyle">
+                <button class="footer-button" onclick="showPopUpForRequest()">Записаться</button>
+            </div>
+
+            <div class="footer-column">
+                <h3 class="footer-title">Контакты</h3>
+                <ul class="footer-contacts">
+                    <li>+7 (123) 456-78-90</li>
+                    <li>info@voguestyle.ru</li>
+                </ul>
+                <div class="footer-social"><a href="https://t.me/voguestyleBot" target="_blank">Telegram</a></div>
+            </div>
+
+            <div class="footer-column">
+                <h3 class="footer-title">Салоны</h3>
+                <ul class="footer-salons">
+                    <li><a href="/salons/bm">Большая Морская ул., 67</a></li>
+                    <li><a href="/salons/gasta">ул. Гастелло, 15</a></li>
+                    <li><a href="/salons/lensa">ул. Ленсовета, 14</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <div class="footer-text">
+            © 2025-present 💜 VogueStyle Beauty Salon. Все права защищены.
+        </div>
+        <div class="footer-text">Нажимая на кнопку "Записаться" вы автоматически соглашаетесь
+            <a href="https://ania.cleverlive.pro/vogueStyle_docs/consent_form.pdf" target="_blank">на обработку персональных данных</a>
+        </div>
+        <div class="version-switcher">
+            Версия:
+            <a href="/master/" {% if site_version == 'master' %}class="active"{% endif %}>Мастер</a> |
+            <a href="/client/" {% if site_version == 'client' %}class="active"{% endif %}>Клиент</a>
+        </div>
+    </div>
+</footer>
+
+
+
+<!--<div class="footer">-->
+<!--    <div class="footer-container">-->
+<!--        <p>&copy; {{ current_year }} VogueStyle 💜 All rights reserved. GUAP</p>-->
+<!--        <div class="version-switcher">-->
+<!--            Версия:-->
+<!--            <a href="/master/" {% if site_version == 'master' %}class="active"{% endif %}>Мастер</a> |-->
+<!--            <a href="/client/" {% if site_version == 'client' %}class="active"{% endif %}>Клиент</a>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--</div>-->
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+<script>
+    function checkZoom() {
+        const isZoomed = window.devicePixelRatio >= 2.5;
+        const mobileHeader = document.querySelector('.mobile-header');
+        const navMenu = document.querySelector('.nav-menu');
+        const mobileMenu = document.querySelector('.mobile-menu');
+
+        if (isZoomed) {
+            mobileHeader.style.display = 'flex';
+            navMenu.style.display = 'none';
+            mobileMenu.style.display = 'block';
+        } else {
+            mobileHeader.style.display = 'none';
+            navMenu.style.display = 'grid';
+            mobileMenu.style.display = 'none';
+            mobileMenu.classList.remove('active');
+        }
+    }
+
+    document.querySelector('.menu-btn').addEventListener('click', function() {
+        document.querySelector('.mobile-menu').classList.add('active');
+    });
+
+    document.querySelector('.close-btn').addEventListener('click', function() {
+        document.querySelector('.mobile-menu').classList.remove('active');
+    });
+
+    // Обработка раскрытия подменю "Салоны"
+    document.querySelectorAll('.mobile-nav-item').forEach(item => {
+        if (item.querySelector('.mobile-dropdown-container')) {
+            item.addEventListener('click', function(e) {
+                if (e.target === this) { // Клик именно по родительскому элементу
+                    e.preventDefault();
+                    const dropdown = this.querySelector('.mobile-dropdown-container');
+                    dropdown.classList.toggle('expanded');
+                }
+            });
+        }
+    });
+
+    window.addEventListener('load', checkZoom);
+    window.addEventListener('resize', checkZoom);
+</script>
+</html>
