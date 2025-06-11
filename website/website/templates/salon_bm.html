@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Салон на Большой Морской ул., 67{% endblock %}
+
+{% block content %}
+<div class="about-header-container">
+    <div class="width-h">
+        <div class="about-header">
+            <h1>Наши салоны</h1>
+        </div>
+
+        <div class="salon-width-h">
+            <div class="salon-body">
+                <div class="salon-container">
+                    <div class="salon-h3">Санкт-Петербург</div>
+                    <div class="salon-h1">Большая Морская ул., 67</div>
+
+                    <div class="salon-info">
+                        <div>
+                            Режим работы<br>
+                            10:00 – 22:00
+                        </div>
+                        <div>
+                            м. Адмиралтейская<br>
+                            +7 123 456-78-90
+                        </div>
+                        <div>
+                            <span class="online-booking">Онлайн-запись</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="carousel-wrapper">
+                <button class="carousel-arrow prev-btn">❮</button>
+
+                <div class="carousel-container">
+                    <div class="carousel">
+                        <div class="carousel-item">
+                            <img src="https://ania.cleverlive.pro/VogueStyle_interior/Bolshaya_Morskaya/entrance_group.png" class="photo-placeholder">
+                        </div>
+                        <div class="carousel-item">
+                            <img src="https://ania.cleverlive.pro/VogueStyle_interior/Bolshaya_Morskaya/hall.png" class="photo-placeholder">
+                        </div>
+                        <div class="carousel-item">
+                            <img src="https://ania.cleverlive.pro/VogueStyle_interior/Bolshaya_Morskaya/VIP_lounge.png" class="photo-placeholder">
+                        </div>
+                        <div class="carousel-item">
+                            <img src="https://ania.cleverlive.pro/VogueStyle_interior/Bolshaya_Morskaya/general_room.png" class="photo-placeholder">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="carousel-arrow next-btn">❯</button>
+            </div>
+
+            <div class="carousel-indicators">
+                <div class="indicator active"></div>
+                <div class="indicator"></div>
+                <div class="indicator"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

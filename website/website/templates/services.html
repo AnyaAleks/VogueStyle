@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}VogueStyle - All Services{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h2>Список услуг</h2>
+    <p>Найди то, что подходит именно тебе!</p>
+</section>
+
+<section class="services">
+    <div class="service-list">
+        {% for service in services %}
+            {% include "delegate.html" %}
+<!--        <div class="service-card">-->
+<!--            <h3>{{ service.service }}</h3>-->
+<!--            <p class="price">${{ service.price }}</p>-->
+<!--        </div>-->
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+
+

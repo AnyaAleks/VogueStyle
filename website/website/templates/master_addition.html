@@ -1,0 +1,43 @@
+<div class="profile-container">
+    <div class="profile-image-wrapper">
+        <div class="profile-image-box">
+            {% if master.photo %}
+                <img src="https://ania.cleverlive.pro/VogueStyle_MastersPhoto/{{ master.photo }}" alt="Фото {{ master.name }}" class="profile-image">
+            {% else %}
+                <div class="profile-image-placeholder">Фото не загружено</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="profile-content">
+        <div class="profile-header">
+            <h3 class="master-job">{{ master.job }}</h3>
+            <p class="master-name">{{ master.name }}</p>
+        </div>
+
+        <div class="master-main-info">
+            <p class="master-specialization">{{ master.specialization }}</p>
+            <p class="master-experience">Стаж: {{ master.experience }} лет</p>
+        </div>
+
+        <div class="master-details" id="details-{{ master.id }}">
+            <p>{{ master.education }}</p>
+            {% if master.certificates %}
+                <div class="master-certificates">
+                    <h4>Сертификаты:</h4>
+                    <ul>
+                        {% for cert in master.certificates %}
+                            <li>{{ cert }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+
+        <button class="read-more-btn" onclick="toggleDetails({{ master.id }})">
+            <span class="btn-text">ЧИТАТЬ ПОДРОБНЕЕ</span>
+            <span class="btn-icon">▼</span>
+        </button>
+    </div>
+</div>
+

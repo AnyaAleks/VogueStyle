@@ -1,0 +1,148 @@
+<div class="popup-content">
+    <h3 class="dialog-title">Выберите услугу: <span id="selected-service-name"></span></h3>
+    <div class="service-list-js" id="services-container">
+        <!-- Услуги будут добавлены динамически -->
+    </div>
+</div>
+
+<script>
+    // Правильная передача данных из Flask в JavaScript
+    const servicesData = {{ services|tojson|safe }};
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!servicesData || !Array.isArray(servicesData)) {
+            console.error('Ошибка: Некорректные данные мастеров', servicesData);
+            document.getElementById('services-container').innerHTML =
+                '<div class="error">Не удалось загрузить данные мастеров</div>';
+            return;
+        }
+
+        renderServices(servicesData);
+    });
+
+    function renderServices(services) {
+        const container = document.getElementById('services-container');
+        container.innerHTML = '';
+
+        services.forEach(service => {
+            const serviceElement = document.createElement('div');
+            serviceElement.className = 'service-js';
+            serviceElement.dataset.id = service.id;
+
+            // Проверяем наличие фото
+            const initials = service.name.split(' ').map(n => n[0]).join('').toUpperCase();
+
+            serviceElement.innerHTML = `
+                <div class="service-info-js">
+                    <div class="service-name-js">${service.name}</div>
+                    <div class="service-price-js">${service.price} rub.</div>
+                </div>
+            `;
+
+            serviceElement.onclick = () => selectService(serviceElement, service.id);
+            container.appendChild(serviceElement);
+        });
+    }
+
+    function selectService(element, serviceId) {
+        document.querySelectorAll('.service-js').forEach(m => m.classList.remove('selected'));
+        element.classList.add('selected');
+        console.log('Выбрана услуга:', masterId);
+    }
+</script>
+
+<style>
+    /* Основные стили попапа */
+    .popup-content {
+        font-family: 'Arial', sans-serif;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .dialog-title {
+        color: #333;
+        margin-bottom: 15px;
+        font-size: 18px;
+    }
+
+    .service-price-info {
+        color: #666;
+        margin-bottom: 20px;
+        font-size: 16px;
+    }
+
+    .dialog-container {
+        font-family: Arial, sans-serif;
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .back-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 5px;
+        margin-bottom: 15px;
+    }
+
+    .dialog-title {
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .service-price-info {
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    .service-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .services {
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .services:hover {
+        border-color: #4285F4;
+    }
+
+    .services.selected {
+        border-color: #4285F4;
+        background-color: #f0f7ff;
+    }
+
+    .service-name {
+        font-weight: bold;
+        color: #333;
+    }
+
+    .service-price {
+        color: #666;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+    .error {
+        color: #ff4444;
+        padding: 15px;
+        text-align: center;
+        border: 1px solid #ffdddd;
+        border-radius: 5px;
+        background: #fff0f0;
+    }
+
+    .service-info {
+        flex-grow: 1;
+    }
+</style>
